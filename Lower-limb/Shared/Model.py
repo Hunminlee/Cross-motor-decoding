@@ -15,3 +15,20 @@ def build_model(input_shape, num_classes):
     model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 
     return model
+
+
+
+def build_model_1D(input_shape, num_classes):
+
+    model = models.Sequential([
+        layers.Conv1D(16, 3, activation="relu", input_shape=input_shape, padding="same"),
+        layers.MaxPooling1D(2),
+        layers.Conv1D(32, 3, activation="relu", padding="same"),
+        layers.GlobalAveragePooling1D(),
+        layers.Dense(64, activation="relu"),
+        layers.Dense(num_classes, activation="softmax")
+    ])
+
+    model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+
+    return model

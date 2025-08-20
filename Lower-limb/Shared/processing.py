@@ -30,6 +30,42 @@ def extract_features_five(window):
 
 import numpy as np
 import pywt
+from scipy.fftpack import fft, ifft
+
+def zc_alg(signal, zc_threshold=0):
+    sign = [[signal[i] * signal[i - 1], abs(signal[i] - signal[i - 1])] for i in range(1, len(signal), 1)]
+
+    sign = np.array(sign)
+    sign = sign[sign[:, 0] < 0]
+    if sign.shape[0] == 0:
+        return 0
+    sign = sign[sign[:, 1] >= zc_threshold]
+    return sign.shape[0]
+
+from statsmodels.tsa.ar_model import AutoReg, ar_select_order
+from nitime import algorithms as alg
+
+def return_arc(signal, order=4):
+    if order >= len(signal):
+        rd = len(signal)-1
+    else:
+        rd = order
+    arc, ars = alg.AR_est_YW(signal, rd)
+    arc = np.array(arc)
+    return arc
+
+def cepstrum_coefficients(signal):
+    spectrum = np.log(np.abs(fft(signal)))
+    ceps = np.real(ifft(spectrum))
+    return ceps
+
+def dwt_coefficients(signal, wavelet='db4'):
+    coeffs = pywt.wavedec(signal, wavelet)
+    return coeffs
+
+def dwpt_coefficients(signal, wavelet='db4', max_level=3):
+    wp = pywt.WaveletPacket(signal, wavelet=wavelet, maxlevel=max_level)
+    return [node.data for node in wp.get_level(max_level)]
 
 def extract_features(window):
     feats = []
@@ -38,6 +74,9 @@ def extract_features(window):
 
         # --- Time-domain features ---
         mav = np.mean(np.abs(x))                          # Mean Absolute Value
+        var = np.var(x)  # Variance
+        zc = zc_alg(x)  # Zero Crossing
+        iemg = np.sum(np.abs(x))  # Integrated EMG
         wl = np.sum(np.abs(np.diff(x)))                   # Waveform Length
         thr = 0.05 * np.max(np.abs(x)) if np.max(np.abs(x)) != 0 else 0  # threshold for WAMP/SSC
         wamp = np.sum(np.abs(np.diff(x)) > thr)           # Willison Amplitude
@@ -65,29 +104,31 @@ def extract_features(window):
                (np.sum(psd) + 1e-8))
 
         # --- Model-based features (Autoregressive coefficients, order=4) ---
-        # Using Yule-Walker estimation
-        try:
-            from statsmodels.regression.linear_model import yule_walker
-            rho, sigma = yule_walker(x, order=4)
-            arc = rho.tolist()
-        except:
-            arc = [0, 0, 0, 0]
+        arc_tmp = return_arc(x, order=4)
+        arc = arc_tmp[:4]
 
         # --- Cepstrum features ---
         spectrum = np.abs(np.fft.fft(x))**2
         log_spectrum = np.log(spectrum + 1e-8)
-        cepstrum = np.fft.ifft(log_spectrum).real
-        cc = cepstrum[1:4]                  # first 3 coefficients
-        cca = np.mean(cc)                   # average cepstrum coeff
+
+        vals = cepstrum_coefficients(x)  # top 3 coefiicients and average
+        cc = vals[:3]
+        cca = np.mean(vals)
 
         # --- Time-frequency features (Wavelet) ---
-        coeffs = pywt.wavedec(x, 'db4', level=3)
-        dwtc = coeffs[1][:2] if len(coeffs[1]) >= 2 else [0, 0]  # 2 coeffs from D1
-        dwtpc = coeffs[2][:3] if len(coeffs[2]) >= 3 else [0, 0, 0]  # 3 coeffs from D2
+        dwt_vals = dwt_coefficients(x)  # top 2 coefiicients
+        dwtc = [np.mean(dwt_vals[0]), np.mean(dwt_vals[1])]
+
+        dwptc_vals = dwpt_coefficients(x)  # top 3 coefiicients
+        dwtpc = [np.mean(dwptc_vals[0]), np.mean(dwptc_vals[1]), np.mean(dwptc_vals[2])]
+
+        #print(mav, var, zc, iemg, wl, wamp, mavs, rms, ssc, msq, v3, ld, dabs, mfl, mpr, mnf, psr)
+        #print("\n\n")
+        #print(dwtc, dwtpc)
 
         # --- Collect all ---
         feats.extend([
-            mav, wl, wamp, mavs, rms, ssc,         # time-domain
+            mav, var, zc, iemg, wl, wamp, mavs, rms, ssc,         # time-domain
             msq, v3, ld, dabs,                     # statistical
             mfl, mpr,                              # complexity
             mnf, psr                               # freq-domain
@@ -98,4 +139,4 @@ def extract_features(window):
         feats.extend(dwtc)                         # 2 DWT coeffs
         feats.extend(dwtpc)                        # 3 DWTP coeffs
 
-    return np.array(feats)
+    return feats
