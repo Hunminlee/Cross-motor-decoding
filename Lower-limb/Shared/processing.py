@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+import scipy
 
 # --- Sliding window ---
 def sliding_window(data, window_size, step_size):
@@ -10,6 +10,22 @@ def sliding_window(data, window_size, step_size):
         end = start + window_size
         windows.append(data[start:end, :])  # (window_size, num_channels)
     return np.array(windows)  # (num_windows, window_size, num_channels)
+
+
+def sliding_window_with_labels(X, y, window_size, step_size):
+    num_samples, num_channels = X.shape
+    windows, labels = [], []
+
+    for start in range(0, num_samples - window_size + 1, step_size):
+        end = start + window_size
+        windows.append(X[start:end, :])
+
+        window_label = y[start:end]
+        # 최빈값 사용
+        label_mode = scipy.stats.mode(window_label, keepdims=False)[0]
+        labels.append(label_mode)
+
+    return np.array(windows), np.array(labels)
 
 # --- Feature extraction ---
 def extract_features_five(window):
