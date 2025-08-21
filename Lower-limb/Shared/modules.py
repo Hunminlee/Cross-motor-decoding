@@ -4,7 +4,7 @@ from sklearn.utils import resample
 import matplotlib.pyplot as plt
 
 import sys
-sys.path.append('../Shared')
+sys.path.append('')
 import processing, Model, Visualization
 
 
