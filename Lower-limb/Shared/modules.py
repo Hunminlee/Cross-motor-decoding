@@ -59,6 +59,38 @@ def random_downsample(X, y=None, fraction=0.5, random_state=42):
     else:
         return X_down
 
+
+def random_downsample_Num(X, y=None, n_keep=None, random_state=42):
+    """
+    Randomly downsample X (and y if provided) to exactly n_keep samples.
+
+    Parameters
+    ----------
+    X : array-like
+        Feature matrix
+    y : array-like or None
+        Labels (optional)
+    n_keep : int
+        Number of samples to keep
+    random_state : int
+        Random seed
+    """
+    np.random.seed(random_state)
+    n_samples = X.shape[0]
+
+    if n_keep is None or n_keep > n_samples:
+        raise ValueError(f"n_keep must be between 1 and {n_samples}, got {n_keep}")
+
+    idx_keep = np.random.choice(n_samples, size=n_keep, replace=False)
+    X_down = X[idx_keep]
+
+    if y is not None:
+        y_down = y[idx_keep]
+        return X_down, y_down
+    else:
+        return X_down
+
+
 def get_X_y(data_list, label_list):
     all_X, all_y = [], []
 
@@ -99,13 +131,13 @@ def get_X_y_WL_only(data_list, label_list):
 
 def y_change_to_int(y_lst):
     unique_labels = np.unique(y_lst)
-    print("Unique labels:", unique_labels)
+    #print("Unique labels:", unique_labels)
 
     # 매핑: 원래 레이블 -> 0부터 시작하는 정수
     label_map = {orig: i for i, orig in enumerate(unique_labels)}
     y_int = np.array([label_map[v] for v in y_lst])
 
     unique_labels = np.unique(y_int)
-    print("New labels:", unique_labels)
+    #print("New labels:", unique_labels)
 
     return y_int
