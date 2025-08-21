@@ -55,7 +55,17 @@ def extract_features_WL(window):
     return np.array(feats)  # (num_channels * 5,)
 
 
-import numpy as np
+def extract_features_ZC(window):
+    feats = []
+    for ch in range(window.shape[1]):
+        x = window[:, ch]
+
+        zc = zc_alg(x)
+
+        feats.extend([zc])
+    return np.array(feats)  # (num_channels * 5,)
+
+
 import pywt
 from scipy.fftpack import fft, ifft
 

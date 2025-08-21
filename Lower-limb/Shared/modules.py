@@ -71,6 +71,19 @@ def get_X_y(data_list, label_list):
 
     return all_X, all_y
 
+
+def get_X_y_ZC_only(data_list, label_list):
+    all_X, all_y = [], []
+
+    for data, label in zip(data_list, label_list):
+        feat = processing.extract_features_ZC(data)  # (num_channels*5,)
+        all_X.append(feat)
+        all_y.append(label)
+
+    all_X, all_y = np.array(all_X), np.array(all_y)   # (N, num_channels*5)
+
+    return all_X, all_y
+
 def get_X_y_WL_only(data_list, label_list):
     all_X, all_y = [], []
 
