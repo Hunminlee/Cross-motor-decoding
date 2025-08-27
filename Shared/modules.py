@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
 from sklearn.utils import resample
-import matplotlib.pyplot as plt
 
 import sys
 sys.path.append('')
-import processing, Model, Visualization
+import processing
 
 
 def label_extraction(data):
