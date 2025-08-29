@@ -18,6 +18,45 @@ def build_model(input_shape, num_classes):
     return model
 
 
+def build_model(num_classes):
+    import keras.backend as K
+
+    K.clear_session()
+
+    model = models.Sequential()
+    model.add(layers.BatchNormalization())
+    model.add(layers.Conv2D(64, (3, 3), activation='relu'))  # , input_shape=(8, 11, 1) # padding='same',
+    model.add(layers.BatchNormalization())
+    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(layers.BatchNormalization())
+
+    model.add(layers.Conv2D(64, (1, 1), activation='relu'))
+    # model.add(layers.LocallyConnected2D(64, (1, 1), activation='relu'))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Conv2D(64, (1, 1), activation='relu'))
+    # model.add(layers.LocallyConnected2D(64, (1, 1), activation='relu'))
+    model.add(layers.BatchNormalization())
+
+    # model.add(layers.Dropout(0.3))
+
+    model.add(layers.Flatten())
+
+    model.add(layers.Dense(512, activation='relu'))
+    model.add(layers.BatchNormalization())
+    # model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(512, activation='relu'))
+    model.add(layers.BatchNormalization())
+    # model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(128, activation='relu'))
+    model.add(layers.BatchNormalization())
+    # model.add(layers.Dropout(0.5))
+
+    model.add(layers.Dense(num_classes, activation='softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
+
+    return model
+
+
 def build_model_1D(input_shape, num_classes):
 
     model = models.Sequential([
