@@ -18,7 +18,7 @@ def build_model(input_shape, num_classes):
     return model
 
 
-def build_model(num_classes):
+def build_model_deep(num_classes):
     import keras.backend as K
 
     K.clear_session()
@@ -61,14 +61,60 @@ def build_model_1D(input_shape, num_classes):
 
     model = models.Sequential([
         layers.Input(shape=input_shape),
-        layers.Conv1D(16, 3, activation="relu", padding="same"),
+        layers.BatchNormalization(),
+        layers.Conv1D(16, 3, activation="relu"),
+        layers.BatchNormalization(),
         layers.MaxPooling1D(2),
-        layers.Conv1D(32, 3, activation="relu", padding="same"),
+        layers.BatchNormalization(),
+        layers.Conv1D(32, 3, activation="relu"),
+        layers.BatchNormalization(),
         layers.GlobalAveragePooling1D(),
+        layers.BatchNormalization(),
         layers.Dense(64, activation="relu"),
+        layers.BatchNormalization(),
         layers.Dense(num_classes, activation="softmax")
     ])
 
     model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+
+    return model
+
+
+
+def build_model_deep_1D(num_classes):
+    import keras.backend as K
+
+    K.clear_session()
+
+    model = models.Sequential()
+    model.add(layers.BatchNormalization())
+    model.add(layers.Conv1D(64, 3, activation='relu'))  # , input_shape=(8, 11, 1) # padding='same',
+    model.add(layers.BatchNormalization())
+    model.add(layers.Conv1D(64, 3, activation='relu'))
+    model.add(layers.BatchNormalization())
+
+    model.add(layers.Conv1D(64, 1, activation='relu'))
+    # model.add(layers.LocallyConnected2D(64, (1, 1), activation='relu'))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Conv1D(64, 1, activation='relu'))
+    # model.add(layers.LocallyConnected2D(64, (1, 1), activation='relu'))
+    model.add(layers.BatchNormalization())
+
+    model.add(layers.Dropout(0.25))
+
+    model.add(layers.Flatten())
+
+    model.add(layers.Dense(512, activation='relu'))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Dropout(0.25))
+    model.add(layers.Dense(512, activation='relu'))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Dropout(0.25))
+    model.add(layers.Dense(128, activation='relu'))
+    model.add(layers.BatchNormalization())
+    model.add(layers.Dropout(0.25))
+
+    model.add(layers.Dense(num_classes, activation='softmax'))
+    model.compile(loss='sparse_categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
 
     return model
